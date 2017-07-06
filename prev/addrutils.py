@@ -4,7 +4,6 @@ from triton import *
 
 
 class ElfAddrs:
-
     def __init__(self, filename):
         self.binary = Elf(filename)
         self.syms = self.binary.getSymbolsTable()

@@ -1,7 +1,6 @@
 import ast
 import os
 import sys
-import chkpoint
 
 from triton import *
 from pintool import *
@@ -11,32 +10,6 @@ from copy import deepcopy
 sys.path.append(os.getcwd())
 from addrutils import *
 from logger import *
-
-
-class Input(object):
-
-    def __init__(self, data):
-        self.__data = data
-        self.__bound = 0
-        self.__dataAddr = dict()
-
-    @property
-    def data(self):
-        return self.__data
-
-    @property
-    def bound(self):
-        return self.__bound
-
-    @property
-    def dataAddr(self):
-        return self.__dataAddr
-
-    def setBound(self, bound):
-        self.__bound = bound
-
-    def addDataAddress(self, address, value):
-        self.__dataAddr[address] = value
 
 
 class CE(object):
@@ -53,7 +26,6 @@ class CE(object):
     elfAddrs = None
     input = None
     AddrAfterEP = 0
-    chk1 = chkpoint.newSnapshot()
 
     def __init__(self, inputSeed, elfAddrs, whitelist):
         CE.entryPoint = elfAddrs.getSymAddr('_start', 0)
@@ -126,7 +98,6 @@ class CE(object):
 
         if inst.getAddress() == CE.entryPoint:  # and not isSnapshotEnabled():
             logger.info("Take Snapshot")
-            CE.chk1.setChkpoint()
             # takeSnapshot()
             return
 
@@ -168,7 +139,6 @@ class CE(object):
             if len(CE.worklist) > 0:  # and isSnapshotEnabled():
                 logger.info("Restore snapshot")
                 # restoreSnapshot()
-                CE.chk1.restoreChkpoint()
             return
        # return
 
