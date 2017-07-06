@@ -5,6 +5,9 @@ __pycache__/
 run.sh
 core
 
+# Binary
+*.out
+
 # C extensions
 *.so
 

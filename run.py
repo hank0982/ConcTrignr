@@ -187,6 +187,8 @@ class CE:
 
     @staticmethod
     def instrBefore(inst):
+        # logger.info("Instruction before")
+        # print(inst)
         if inst.getAddress() == CE.entryPoint:
             CE.AddrAfterEP = inst.getNextAddress()
 
@@ -198,7 +200,7 @@ class CE:
             return
 
         if inst.getAddress() == CE.entryPoint:  # and not isSnapshotEnabled():
-            logger.info("Take Snapshot")
+            # logger.info("Take Snapshot")
             # takeSnapshot()
             return
 
@@ -252,10 +254,10 @@ class CE:
 def main():
     setArchitecture(ARCH.X86_64)
     print os.getcwd()
-    elfAddrs = ElfAddrs("programs/b.out")
+    elfAddrs = ElfAddrs("programs/c.out")
     logger.info("Set elf address")
     # Prepare for running
-    taskCE = CE("5", elfAddrs, ["main"])
+    taskCE = CE("2", elfAddrs, ["main"])
     logger.info("Set CE object")
     taskCE.run()
 
