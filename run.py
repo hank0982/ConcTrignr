@@ -139,9 +139,9 @@ class CE:
 
     @staticmethod
     def getGreedyExpr(inst):
-        logger.debug("Branching points: %d", len(CE.myPC))
+        logger.info("Branching points: %d", len(CE.myPC))
         for j in range(CE.input.bound, len(CE.myPC)):
-            logger.debug("Inputbound: %d", j)
+            logger.info("Inputbound: %d", j)
             expr = []
             for i in range(0, j):
                 ripId = CE.myPC[i][0]
@@ -160,10 +160,10 @@ class CE:
 
             expr = ast.compound(expr)
             # logger.debug("%s",expr)
-            logger.debug(
+            logger.info(
                 "==================================================================================")
             model = getModel(expr)
-            logger.debug("Model: %d", len(model))
+            logger.info("Model: %d", len(model))
 
             if len(model) > 0:
                 newInput = deepcopy(CE.input)
@@ -244,11 +244,13 @@ class CE:
     @staticmethod
     def run():
         startAnalysisFromAddress(CE.entryPoint)
+        print 'worklist', CE.worklist
         insertCall(CE.mainAnalysis,   INSERT_POINT.ROUTINE_ENTRY,
                    "main")  # Called when we are in main's beginning
         insertCall(CE.instrBefore,    INSERT_POINT.BEFORE)
         insertCall(CE.fini,           INSERT_POINT.FINI)
         runProgram()
+
 
 
 def main():
