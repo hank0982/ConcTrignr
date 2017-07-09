@@ -59,13 +59,50 @@
 ## $
 ##
 
-import  smt2lib
+# import  smt2lib
+import ast
 
 from    triton      import *
 from    pintool     import *
 from    collections import OrderedDict
 from    copy        import deepcopy
 
+icnt = 0
+
+class ElfAddrs:
+    def __init__(self, filename):
+        self.binary = Elf(filename)
+        self.syms = self.binary.getSymbolsTable()
+        self.elfStart = 0
+        self.elfEnd = 0
+
+    def getSymAddr(self, symName, flag):
+        for sym in self.syms:
+            if sym.getName() == symName:
+                addrSymStart = sym.getValue()
+                if sym.getSize() > 0:
+                    addrSymEnd = addrSymStart + sym.getSize() - 1
+                else:
+                    addrSymEnd = addrSymStart + sym.getSize()
+                # print 'symbol %s_has been founded, addr: %x - %x' %(symName,
+                # addrSymStart, addrSymEnd)
+                break
+        if flag:
+            return addrSymEnd
+        else:
+            return addrSymStart
+
+    def getSelfAddr(self):
+        self.elfStart = self.getSymAddr('_init', 0)
+        self.elfEnd = self.getSymAddr('_end', 0)
+        return (self.elfStart, self.elfEnd)
+
+    def isLocalInstr(self, addr):
+        self.getSelfAddr()
+        if addr <= self.elfEnd:
+            return 1
+        else:
+            return 0
 
 
 class Input(object):
@@ -95,7 +132,7 @@ class Input(object):
 
 
 
-class TritonExecution(object):
+class TritonExecution:
 
     program     = None
     input       = None
@@ -109,6 +146,10 @@ class TritonExecution(object):
 
     @staticmethod
     def cbefore(instruction):
+        # print 'In before'
+        global icnt
+        icnt += 1
+
         if instruction.getAddress() == TritonExecution.entryPoint:
             TritonExecution.AddrAfterEP = instruction.getNextAddress()
 
@@ -122,6 +163,9 @@ class TritonExecution(object):
             print "[+] Take Snapshot"
             takeSnapshot()
             return
+
+        if getRoutineName(instruction.getAddress()) in TritonExecution.whitelist:
+            print instruction, getRoutineName(instruction.getAddress()), instruction.isBranch()
 
         if getRoutineName(instruction.getAddress()) in TritonExecution.whitelist and instruction.isBranch() and instruction.getType() != OPCODE.JMP and instruction.getOperands()[0].getType() == OPERAND.IMM:
             addr1 = instruction.getNextAddress()              # next address next from the current one
@@ -148,21 +192,21 @@ class TritonExecution(object):
                     ripId = TritonExecution.myPC[i][0]
                     symExp = getFullAst(getSymbolicExpressionFromId(ripId).getAst())
                     addr = TritonExecution.myPC[i][1]
-                    expr.append(smt2lib.smtAssert(smt2lib.equal(symExp, smt2lib.bv(addr,  CPUSIZE.QWORD_BIT))))
+                    expr.append(ast.assert_(ast.equal(symExp, ast.bv(addr,  CPUSIZE.QWORD_BIT))))
 
                 ripId = TritonExecution.myPC[j][0]
                 symExp = getFullAst(getSymbolicExpressionFromId(ripId).getAst())
                 addr = TritonExecution.myPC[j][2]
-                expr.append(smt2lib.smtAssert(smt2lib.equal(symExp, smt2lib.bv(addr,  CPUSIZE.QWORD_BIT))))
+                expr.append(ast.assert_(ast.equal(symExp, ast.bv(addr,  CPUSIZE.QWORD_BIT))))
 
-                expr = smt2lib.compound(expr)
+                expr = ast.compound(expr)
                 model = getModel(expr)
 
                 if len(model) > 0:
                     newInput = deepcopy(TritonExecution.input)
                     newInput.setBound(j + 1)
 
-                    for k,v in model.items():
+                    for k, v in model.items():
                         symVar = getSymbolicVariableFromId(k)
                         newInput.addDataAddress(symVar.getKindValue(), v.getValue())
                     print newInput.dataAddr
@@ -194,7 +238,7 @@ class TritonExecution(object):
     def mainAnalysis(threadId):
 
         print "[+] In main"
-
+        CPUSIZE.REG = 8
         rdi = getCurrentRegisterValue(REG.RDI) # argc
         rsi = getCurrentRegisterValue(REG.RSI) # argv
         argv0_addr = getCurrentMemoryValue(getCurrentRegisterValue(REG.RSI), CPUSIZE.REG) # argv[0] pointer
@@ -203,41 +247,53 @@ class TritonExecution(object):
         print "[+] In main() we set :"
         od = OrderedDict(sorted(TritonExecution.input.dataAddr.items()))
 
-        for k,v in od.iteritems():
+        for k, v in od.iteritems():
             print "\t[0x%x] = %x %c" % (k, v, v)
-            setCurrentMemoryValue(Memory(k, CPUSIZE.BYTE), v)
-            convertMemToSymVar(Memory(k, CPUSIZE.BYTE), "addr_%d" % k)
+            setCurrentMemoryValue(MemoryAccess(k, CPUSIZE.BYTE), v)
+            convertMemoryToSymbolicVariable(MemoryAccess(k, CPUSIZE.BYTE), "addr_%d" % k)
 
         for idx, byte in enumerate(TritonExecution.input.data):
+            print idx, byte
             if argv1_addr + idx not in TritonExecution.input.dataAddr: # Not overwrite the previous setting
                 print "\t[0x%x] = %x %c" % (argv1_addr + idx, ord(byte), ord(byte))
-                setCurrentMemoryValue(Memory(argv1_addr + idx, CPUSIZE.BYTE), ord(byte))
-                convertMemToSymVar(Memory(argv1_addr + idx, CPUSIZE.BYTE), "addr_%d" % idx)
+                setCurrentMemoryValue(MemoryAccess(argv1_addr + idx, CPUSIZE.BYTE), ord(byte))
+                convertMemoryToSymbolicVariable(MemoryAccess(argv1_addr + idx, CPUSIZE.BYTE), "addr_%d" % idx)
 
 
     @staticmethod
-    def run(inputSeed, entryPoint, exitPoint, whitelist = []):
+    def run(inputSeed, elfAddrs, whitelist = []):
+        TritonExecution.entryPoint  = elfAddrs.getSymAddr('_start', 0)
+        TritonExecution.exitPoint = elfAddrs.getSymAddr('main', 1)
 
-        TritonExecution.exitPoint   = exitPoint
-        TritonExecution.entryPoint  = entryPoint
+        print TritonExecution.exitPoint, TritonExecution.entryPoint
+
         TritonExecution.worklist    = [Input(inputSeed)]
         TritonExecution.inputTested = []
         TritonExecution.whitelist   = whitelist
 
-        startAnalysisFromAddr(entryPoint)
+        print 'Before start analysis'
+        startAnalysisFromAddress(TritonExecution.entryPoint)
+        insertCall(TritonExecution.mainAnalysis, INSERT_POINT.ROUTINE_ENTRY, 'main')
+        insertCall(TritonExecution.cbefore,      INSERT_POINT.BEFORE)
+        insertCall(TritonExecution.fini,         INSERT_POINT.FINI)
 
-        addCallback(TritonExecution.mainAnalysis,   CALLBACK.ROUTINE_ENTRY, "main") # Called when we are in main's beginning
-        addCallback(TritonExecution.cbefore,        CALLBACK.BEFORE)
-        addCallback(TritonExecution.fini,           CALLBACK.FINI)
+        # addCallback(TritonExecution.mainAnalysis, INSERT_POINT.ROUTINE_ENTRY, "main")
+        # addCallback(TritonExecution.cbefore,      INSERT_POINT.BEFORE)
+        # addCallback(TritonExecution.fini,         INSERT_POINT.FINI)
+
+        print 'Before run program'
         runProgram()
+
+        print 'Instruction counter: ', icnt
 
 
 
 if __name__=='__main__':
     # Set architecture
     setArchitecture(ARCH.X86_64)
+    elfAddrs = ElfAddrs("programs/c.out")
     #TritonExecution.run("aaa", 0x4004a0, 0x40065D, ["main", "myatoi"])           # ./triton ./src/tools/code_coverage.py ./src/samples/code_coverage/test_atoi a
     #TritonExecution.run("bad !", 0x400480, 0x40061B, ["main", "check"])          # ./triton ./src/tools/code_coverage.py ./src/samples/crackmes/crackme_xor abc
-    TritonExecution.run("aaaaaaaa", 0x400460, 0x400666, ["main", "check"])       # ./triton ./src/tools/code_coverage.py ./src/samples/crackmes/crackme_regex_fsm a
+    TritonExecution.run("2", elfAddrs, ["main", "check"])       # ./triton ./src/tools/code_coverage.py ./src/samples/crackmes/crackme_regex_fsm a
     #TritonExecution.run("aaaaaaaa", 0x400460, 0x402ECA, ["main", "checkinput"])  # ./triton ./src/tools/code_coverage.py ./src/samples/crackmes/crackme_regex_fsm_obfuscated a
 

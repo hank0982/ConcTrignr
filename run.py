@@ -122,6 +122,7 @@ class CE:
         for k, v in od.iteritems():
             logger.info("in main analysis 1")
             logger.info("\t[0x%x] = %x %c" % (k, v, v))
+            print 'set memory'
             setCurrentMemoryValue(MemoryAccess(k, CPUSIZE.BYTE), v)
             convertMemoryToSymbolicVariable(
                 MemoryAccess(k, CPUSIZE.BYTE), "addr_%d" % k)
