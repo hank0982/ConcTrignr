@@ -13,3 +13,7 @@ simple: standard.c
 complex: complex.c
 	$(CC) -o c.out complex.c
 	$(CC) -S complex.c
+
+test_atoi: test_atoi.c
+	$(CC) -o test_atoi.out test_atoi.c
+	$(CC) -S test_atoi.c

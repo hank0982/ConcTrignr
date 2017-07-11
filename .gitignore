@@ -8,6 +8,9 @@ core
 # Binary
 *.out
 
+# Assembly
+/programs/*.s
+
 # C extensions
 *.so
 
