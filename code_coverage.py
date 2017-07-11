@@ -187,8 +187,8 @@ class TritonExecution:
 
         if instruction.getAddress() == TritonExecution.exitPoint:
             print colored('[+] Exit point', 'magenta')
-            print colored(str(TritonExecution.myPC), 'red')
-            print colored('Bound = %d' % TritonExecution.input.bound, 'yellow')
+            print colored(str(TritonExecution.myPC), 'cyan')
+            # print colored('Bound = %d' % TritonExecution.input.bound, 'yellow')
 
             # SAGE algorithm
             # http://research.microsoft.com/en-us/um/people/pg/public_psfiles/ndss2008.pdf
@@ -212,8 +212,8 @@ class TritonExecution:
                 expr = ast.compound(expr)
                 model = getModel(expr)
 
-                print colored("model: " + repr(model), 'yellow')
-                print colored("expr: " + repr(expr), 'green')
+                print colored("model: " + repr(model), 'green')
+                # print colored("expr: " + repr(expr), 'green')
 
                 if len(model) > 0:
                     newInput = deepcopy(TritonExecution.input)
@@ -308,7 +308,7 @@ if __name__ == '__main__':
     # Set architecture
     setArchitecture(ARCH.X86_64)
 
-    # elfAddrs = ElfAddrs("programs/test_atoi")
+    # elfAddrs = ElfAddrs("programs/test_atoi.out")
     # TritonExecution.run("aaa", elfAddrs, ["main", "check"])
 
     elfAddrs = ElfAddrs("programs/b.out")
