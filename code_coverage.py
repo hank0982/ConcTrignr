@@ -312,4 +312,4 @@ if __name__ == '__main__':
     # TritonExecution.run("aaa", elfAddrs, ["main", "check"])
 
     elfAddrs = ElfAddrs("programs/c.out")
-    TritonExecution.run("b", elfAddrs, ["check"])
+    TritonExecution.run('1', elfAddrs, ["check"])
