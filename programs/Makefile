@@ -1,6 +1,6 @@
 CC = gcc
 
-all: array simple complex
+all: array simple complex vector thread
 
 array: array.c
 	$(CC) -o a.out array.c
@@ -17,3 +17,9 @@ complex: complex.c
 test_atoi: test_atoi.c
 	$(CC) -o test_atoi.out test_atoi.c
 	$(CC) -S test_atoi.c
+
+vector: vector.cpp
+	g++ -o v.out vector.cpp
+
+thread: thread.c
+	$(CC) -o p.out thread.c -lpthread

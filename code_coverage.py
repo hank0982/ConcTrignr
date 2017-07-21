@@ -59,8 +59,6 @@
 # $
 ##
 
-import ast
-
 from triton import *
 from pintool import *
 from collections import OrderedDict
@@ -156,7 +154,7 @@ class TritonExecution:
         if instruction.getAddress() == TritonExecution.AddrAfterEP:
             # Reset the path constraint
             TritonExecution.myPC = []
-            TritonExecution.input = TritonExecution.worklist.pop() # Take the first input
+            TritonExecution.input = TritonExecution.worklist.pop()  # Take the first input
             # Add this input to the tested input
             TritonExecution.inputTested.append(TritonExecution.input)
             return
@@ -168,7 +166,7 @@ class TritonExecution:
 
         rt_name = getRoutineName(instruction.getAddress())
         if rt_name in TritonExecution.whitelist and instruction.isBranch() and instruction.getType() != OPCODE.JMP and instruction.getOperands()[0].getType() == OPERAND.IMM:
-            print colored(getRoutineName(instruction.getAddress()) + ': ' + str(instruction), 'blue')
+            # print colored(getRoutineName(instruction.getAddress()) + ': ' + str(instruction), 'blue')
             # next address next from the current one
             addr1 = instruction.getNextAddress()
             # Address in the instruction condition (branch taken)
@@ -176,22 +174,23 @@ class TritonExecution:
 
             # Get the reference of the RIP symbolic register
             ripId = getSymbolicRegisterId(REG.RIP)
+            # print 'symbolic_id', ripId
 
             # [PC id, address taken, address not taken]
             if instruction.isConditionTaken():
                 TritonExecution.myPC.append([ripId, addr2, addr1])
             else:
                 TritonExecution.myPC.append([ripId, addr1, addr2])
-
             return
 
         if instruction.getAddress() == TritonExecution.exitPoint:
             print colored('[+] Exit point', 'magenta')
             print colored(str(TritonExecution.myPC), 'cyan')
-            # print colored('Bound = %d' % TritonExecution.input.bound, 'yellow')
+            print 'Symbolic variables:', getSymbolicVariables()
 
             # SAGE algorithm
             # http://research.microsoft.com/en-us/um/people/pg/public_psfiles/ndss2008.pdf
+            print colored('input.bound ' + repr(TritonExecution.input.bound), 'green')
             for j in range(TritonExecution.input.bound, len(TritonExecution.myPC)):
                 expr = []
                 for i in range(0, j):
@@ -205,15 +204,14 @@ class TritonExecution:
                 ripId = TritonExecution.myPC[j][0]
                 symExp = getFullAst(
                     getSymbolicExpressionFromId(ripId).getAst())
+
                 addr = TritonExecution.myPC[j][2]
                 expr.append(ast.assert_(
                     ast.equal(symExp, ast.bv(addr,  CPUSIZE.QWORD_BIT))))
 
                 expr = ast.compound(expr)
                 model = getModel(expr)
-
                 print colored("model: " + repr(model), 'green')
-                # print colored("expr: " + repr(expr), 'green')
 
                 if len(model) > 0:
                     newInput = deepcopy(TritonExecution.input)
@@ -249,7 +247,6 @@ class TritonExecution:
 
     @staticmethod
     def mainAnalysis(threadId):
-
         print colored('[+] In main', 'white')
         CPUSIZE.REG = 8
         rdi = getCurrentRegisterValue(REG.RDI)  # argc
@@ -257,7 +254,7 @@ class TritonExecution:
         argv0_addr = getCurrentMemoryValue(
             getCurrentRegisterValue(REG.RSI), CPUSIZE.REG)  # argv[0] pointer
         argv1_addr = getCurrentMemoryValue(
-            rsi + CPUSIZE.REG, CPUSIZE.REG)                # argv[1] pointer
+            rsi + CPUSIZE.REG, CPUSIZE.REG)                 # argv[1] pointer
 
         print colored('[+] In main() we set :', 'magenta')
         od = OrderedDict(sorted(TritonExecution.input.dataAddr.items()))
@@ -281,9 +278,7 @@ class TritonExecution:
         TritonExecution.entryPoint = elfAddrs.getSymAddr('_start', 0)
         TritonExecution.exitPoint = elfAddrs.getSymAddr('main', 1)
 
-        # print TritonExecution.exitPoint, TritonExecution.entryPoint
-
-        TritonExecution.worklist = [Input(inputSeed)]
+        TritonExecution.worklist = [Input(inputSeed), ]
         TritonExecution.inputTested = []
         TritonExecution.whitelist = whitelist
 
@@ -301,15 +296,10 @@ class TritonExecution:
         print colored('Before run program', 'yellow')
         print runProgram()
 
-        print colored('Instruction counter: %d' % icnt, 'yellow')
-
 
 if __name__ == '__main__':
     # Set architecture
     setArchitecture(ARCH.X86_64)
 
-    # elfAddrs = ElfAddrs("programs/test_atoi.out")
-    # TritonExecution.run("aaa", elfAddrs, ["main", "check"])
-
     elfAddrs = ElfAddrs("programs/c.out")
-    TritonExecution.run('1', elfAddrs, ["check"])
+    TritonExecution.run('41', elfAddrs, ["check", ])
