@@ -8,6 +8,12 @@ core
 # Binary
 *.out
 
+# Temp
+/tmp
+
+# Test
+/programs/tests
+
 # Assembly
 /programs/*.s
 
