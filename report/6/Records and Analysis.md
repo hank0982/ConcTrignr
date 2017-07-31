@@ -22,14 +22,32 @@ angr results:
 
 
 ```shell
-➜  ConcTriton git:(master) ✗ python angr_run.py programs/a.out
-WARNING | 2017-07-30 14:59:39,610 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry.
-
-
-
-[*] Paths found: 2
-[+] New Input: 6 | ASCII: 54
-[+] New Input: 7 | ASCII: 55
+➜  ConcTriton git:(master) ✗ python angr_run.py -r -s2 -C0 -l1 programs/array.c                                                 
+WARNING | 2017-07-31 20:01:50,119 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry. 
+                                                                                                                                
+                                                                                                                                
+                                                                                                                                
+[*] Compiling...                                                                                                                
+gcc -o programs/a.out programs/array.c                                                                                          
+[*] Compile completed                                                                                                           
+                                                                                                                                
+[*] Analysing...                                                                                                                
+[*] Paths found: 2                                                                                                              
+[+] New Input: 6 | ASCII: 54                                                                                                    
+[+] New Input: 7 | ASCII: 55                                                                                                    
+[*] Analysis completed                                                                                                          
+                                                                                                                                
+[*] Result 1:                                                                                                                   
+Calling: programs/a.out 6                                                                                                       
+0                                                                                                                               
+return value:0                                                                                                                  
+                                                                                                                                
+[*] Result 2:                                                                                                                   
+Calling: programs/a.out 7                                                                                                       
+0                                                                                                                               
+return value:0                                                                                                                  
+                                                                                                                                
+Coverage: 50.00%
 ```
 
 Triton results:
@@ -82,14 +100,32 @@ int main(int argc, char**argv) {
 Even this program can only reach the "return 0" statement, but angr said it found two paths. I am still investigating causes.
 
 ```shell
-➜  ConcTriton git:(master) ✗ python angr_run.py programs/a.out
-WARNING | 2017-07-30 15:05:40,980 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry.
-
-
-
-[*] Paths found: 2
-[+] New Input: 8 | ASCII: 56
-[+] New Input: 3 | ASCII: 51
+➜  ConcTriton git:(master) ✗ python angr_run.py -r -s2 -C0 -l1 programs/array.c                                                 
+WARNING | 2017-07-31 20:04:48,664 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry. 
+                                                                                                                                
+                                                                                                                                
+                                                                                                                                
+[*] Compiling...                                                                                                                
+gcc -o programs/a.out programs/array.c                                                                                          
+[*] Compile completed                                                                                                           
+                                                                                                                                
+[*] Analysing...                                                                                                                
+[*] Paths found: 2                                                                                                              
+[+] New Input: 8 | ASCII: 56                                                                                                    
+[+] New Input: 3 | ASCII: 51                                                                                                    
+[*] Analysis completed                                                                                                          
+                                                                                                                                
+[*] Result 1:                                                                                                                   
+Calling: programs/a.out 8                                                                                                       
+0                                                                                                                               
+return value:0                                                                                                                  
+                                                                                                                                
+[*] Result 2:                                                                                                                   
+Calling: programs/a.out 3                                                                                                       
+4                                                                                                                               
+return value:0                                                                                                                  
+                                                                                                                                
+Coverage: 50.00%
 ```
 
 ## 2. Multithreading
@@ -154,24 +190,127 @@ Triton used almost 4G memory and got nothing.
 ### a. Test program
 
 ```c
-#include <stdio.h>
-
 int main(int argc, char** argv) {
     // Maximum of signed int: 2147483647
     int a = 2147483640;
     int b = atoi(argv[1]);
     int c = 2;
 
-    if (a + b < 0 && b > 0)
+    if (c * b < 0 && b > 0)
         return 2;
-    else if (c * b < 0 && b > 0)
+    else if (a + b < 0 && b > 0)
         return 1;
     else
         return 0;
 }
 ```
 
+angr output
 
+```shell
+➜  ConcTriton git:(master) ✗ python angr_run.py -r -s3 -C0 -l10 programs/overflow.c
+WARNING | 2017-07-31 20:13:21,501 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry.
+
+
+
+[*] Compiling...
+gcc -o programs/o.out programs/overflow.c
+[*] Compile completed
+
+[*] Analysing...
+[*] Paths found: 4
+[+] New Input:  0<0000000 | ASCII: 0 48 60 48 48 48 48 48 48 48
+[+] New Input: -8Z  ☺→§o | ASCII: 45 56 90 32 195 0 1 26 21 111
+[+] New Input: 892977170= | ASCII: 56 57 50 57 55 55 49 55 48 61
+[+] New Input: 9u■q§9 | ASCII: 57 166 117 22 166 244 113 175 21 57
+[*] Analysis completed
+
+[*] Result 1:
+Calling: programs/o.out 0<0000000
+return value:0
+
+[*] Result 2:
+Calling: programs/o.out -8Z ☺→§o
+return value:0
+
+[*] Result 3:
+Calling: programs/o.out 892977170=
+return value:1
+
+[*] Result 4:
+Calling: programs/o.out 9u■q§9
+return value:2
+
+Coverage: 100.00%
+```
+
+Triton output
+
+```shell
+➜  ConcTriton git:(master) ✗ make triton P="o.out 1000000000"
+echo "=== Using Triton ==="
+=== Using Triton ===
+/home/neil/Triton/build/triton triton_run.py programs/o.out 1000000000
+Before start analysis
+Before run program
+[+] Take Snapshot
+[+] In main
+[+] In main() we set :
+Input data      [0x7ffc771af737] = 49 1
+Input data      [0x7ffc771af738] = 48 0
+Input data      [0x7ffc771af739] = 48 0
+Input data      [0x7ffc771af73a] = 48 0
+Input data      [0x7ffc771af73b] = 48 0
+Input data      [0x7ffc771af73c] = 48 0
+Input data      [0x7ffc771af73d] = 48 0
+Input data      [0x7ffc771af73e] = 48 0
+Input data      [0x7ffc771af73f] = 48 0
+Input data      [0x7ffc771af740] = 48 0
+[+] Exit point
+[[2453L, 4195696L, 4195709L], [2462L, 4195702L, 4195709L]]
+Symbolic variables: {0L: SymVar_0:8, 1L: SymVar_1:8, 2L: SymVar_2:8, 3L: SymVar_3:8, 4L: SymVar_4:8, 5L: SymVar_5:8, 6L: SymVar_6:8, 7L: SymVar_7:8, 8L: SymVar_8:8, 9L: SymVar_9:8}
+input.bound 0
+model: {0L: <SolverModel object at 0x2ba2ea388468>, 1L: <SolverModel object at 0x2ba2ea388498>, 2L: <SolverModel object at 0x2ba2ea3884b0>, 3L: <SolverModel object at 0x2ba2ea3884c8>, 4L: <SolverModel object at 0x2ba2ea3884e0>, 5L: <SolverModel object at 0x2ba2ea3884f8>, 6L: <SolverModel object at 0x2ba2ea388510>, 7L: <SolverModel object at 0x2ba2ea388528>, 8L: <SolverModel object at 0x2ba2ea388540>, 9L: <SolverModel object at 0x2ba2ea388558>}
+New input: {140722306742080L: 149L, 140722306742071L: 140L, 140722306742072L: 188L, 140722306742073L: 74L, 140722306742074L: 198L, 140722306742075L: 144L, 140722306742076L: 49L, 140722306742077L: 37L, 140722306742078L: 214L, 140722306742079L: 50L}
+model: {0L: <SolverModel object at 0x2ba2ea388798>, 1L: <SolverModel object at 0x2ba2ea3887c8>, 2L: <SolverModel object at 0x2ba2ea3887e0>, 3L: <SolverModel object at 0x2ba2ea3887f8>, 4L: <SolverModel object at 0x2ba2ea388810>, 5L: <SolverModel object at 0x2ba2ea388828>, 6L: <SolverModel object at 0x2ba2ea388840>, 7L: <SolverModel object at 0x2ba2ea388858>, 8L: <SolverModel object at 0x2ba2ea388870>, 9L: <SolverModel object at 0x2ba2ea388888>}
+New input: {140722306742080L: 64L, 140722306742071L: 48L, 140722306742072L: 81L, 140722306742073L: 84L, 140722306742074L: 128L, 140722306742075L: 66L, 140722306742076L: 132L, 140722306742077L: 191L, 140722306742078L: 64L, 140722306742079L: 154L}
+[+] Restore snapshot
+[+] In main
+[+] In main() we set :
+OD items:       [0x7ffc771af737] = 48 0
+OD items:       [0x7ffc771af738] = 81 Q
+OD items:       [0x7ffc771af739] = 84 T
+OD items:       [0x7ffc771af73a] = 128
+OD items:       [0x7ffc771af73b] = 66 B
+OD items:       [0x7ffc771af73c] = 132
+OD items:       [0x7ffc771af73d] = 191
+OD items:       [0x7ffc771af73e] = 64 @
+OD items:       [0x7ffc771af73f] = 154
+OD items:       [0x7ffc771af740] = 64 @
+[+] Exit point
+[[1813L, 4195709L, 4195696L], [1833L, 4195734L, 4195721L]]
+Symbolic variables: {0L: SymVar_0:8, 1L: SymVar_1:8, 2L: SymVar_2:8, 3L: SymVar_3:8, 4L: SymVar_4:8, 5L: SymVar_5:8, 6L: SymVar_6:8, 7L: SymVar_7:8, 8L: SymVar_8:8, 9L: SymVar_9:8}
+input.bound 2
+[+] Restore snapshot
+[+] In main
+[+] In main() we set :
+OD items:       [0x7ffc771af737] = 140
+OD items:       [0x7ffc771af738] = 188
+OD items:       [0x7ffc771af739] = 74 J
+OD items:       [0x7ffc771af73a] = 198
+OD items:       [0x7ffc771af73b] = 144
+OD items:       [0x7ffc771af73c] = 49 1
+OD items:       [0x7ffc771af73d] = 37 %
+OD items:       [0x7ffc771af73e] = 214
+OD items:       [0x7ffc771af73f] = 50 2
+OD items:       [0x7ffc771af740] = 149
+[+] Exit point
+[[1687L, 4195709L, 4195696L], [1707L, 4195734L, 4195721L]]
+Symbolic variables: {0L: SymVar_0:8, 1L: SymVar_1:8, 2L: SymVar_2:8, 3L: SymVar_3:8, 4L: SymVar_4:8, 5L: SymVar_5:8, 6L: SymVar_6:8, 7L: SymVar_7:8, 8L: SymVar_8:8, 9L: SymVar_9:8}
+input.bound 1
+model: {}
+[+] Done !
+```
 
 ### b. Analysis
 
