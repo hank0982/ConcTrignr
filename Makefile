@@ -6,7 +6,7 @@ BIN=$(PD)/$P
 
 CC = gcc
 
-all: array thread
+all: array thread test overflow signed
 
 array: $(PD)/array.c
 	$(CC) -o $(PD)/a.out $(PD)/array.c
@@ -27,16 +27,16 @@ context: $(PD)/context.c
 	$(CC) -o $(PD)/c.out $(PD)/context.c
 
 test: $(PD)/test.c
-	$(CC) -o $(PD)/t.out $(PD)/standard.c
+	$(CC) -o $(PD)/t.out $(PD)/test.c
 
 
-triton:
+triton: triton_run.py
 	echo "=== Using Triton ==="
-	$(PINTOOL)/triton run_triton.py $(BIN)
+	$(PINTOOL)/triton triton_run.py $(BIN)
 
-angr: run_angr.py
+angr: angr_run.py
 	echo "=== Using angr ==="
-	python run_angr $(BIN)
+	python angr_run.py $(BIN)
 
 clean:
 	rm -f core

@@ -1,75 +1,11 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-##
-# Triton tool to perform code coverage
-# Romain Thomas - 2015-09-26
-##
-# Description:
-# ------------
-##
-# This tool aims to reach all basic blocks in a program using dynamic symbolic
-# resolution and the snapshot engine. The algorithm is based on Microsoft SAGE's
-# fuzzer.
-##
-##
-# Output:
-# -------
-##
-# $ ./triton ./src/tools/code_coverage.py ./src/samples/code_coverage/test_atoi a
-# [+] Take Snapshot
-# [+] In main
-# [+] In main() we set :
-# [0x7ffc92bdc54a] = 61 a
-# [0x7ffc92bdc54b] = 61 a
-# [0x7ffc92bdc54c] = 61 a
-# [+] Exit point
-## {140722770396490: 0}
-## {140722770396490: 32}
-## {140722770396490: 57}
-# [+] Restore snapshot
-# [+] In main
-# [+] In main() we set :
-# [0x7ffc92bdc54a] = 39 9
-# [0x7ffc92bdc54b] = 61 a
-# [0x7ffc92bdc54c] = 61 a
-# [+] Exit point
-## {140722770396490: 57, 140722770396491: 0}
-## {140722770396490: 57, 140722770396491: 8}
-## {140722770396490: 56, 140722770396491: 56}
-# [+] Restore snapshot
-# [+] In main
-# [+] In main() we set :
-# [0x7ffc92bdc54a] = 38 8
-# [0x7ffc92bdc54b] = 38 8
-# [0x7ffc92bdc54c] = 61 a
-# [+] Exit point
-## {140722770396490: 56, 140722770396491: 56, 140722770396492: 0}
-## {140722770396490: 57, 140722770396491: 57, 140722770396492: 8}
-## {140722770396490: 57, 140722770396491: 57, 140722770396492: 56}
-## {140722770396490: 51, 140722770396491: 51, 140722770396492: 63}
-# [+] Restore snapshot
-# [+] In main
-# [+] In main() we set :
-# [0x7ffc92bdc54a] = 33 3
-# [0x7ffc92bdc54b] = 33 3
-# [0x7ffc92bdc54c] = 3f ?
-# ok
-# [+] Exit point
-# [+] Done !
-# $
-##
-
 from triton import *
 from pintool import *
 from collections import OrderedDict
 from copy import deepcopy
 from termcolor import colored
 
-icnt = 0
-
 
 class ElfAddrs:
-
     def __init__(self, filename):
         self.binary = Elf(filename)
         self.syms = self.binary.getSymbolsTable()
@@ -106,7 +42,6 @@ class ElfAddrs:
 
 
 class Input(object):
-
     def __init__(self, data):
         self.__data = data
         self.__bound = 0
@@ -132,7 +67,6 @@ class Input(object):
 
 
 class TritonExecution:
-
     program = None
     input = None
     worklist = None
@@ -145,9 +79,6 @@ class TritonExecution:
 
     @staticmethod
     def cbefore(instruction):
-        global icnt
-        icnt += 1
-
         if instruction.getAddress() == TritonExecution.entryPoint:
             TritonExecution.AddrAfterEP = instruction.getNextAddress()
 
@@ -301,5 +232,5 @@ if __name__ == '__main__':
     # Set architecture
     setArchitecture(ARCH.X86_64)
 
-    elfAddrs = ElfAddrs("programs/c.out")
-    TritonExecution.run('1', elfAddrs, ["check", ])
+    elfAddrs = ElfAddrs("programs/m.out")
+    TritonExecution.run('1', elfAddrs, ["main", ])
