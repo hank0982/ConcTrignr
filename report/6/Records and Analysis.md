@@ -59,7 +59,7 @@ As we can see, angr generated two "illegal" test cases, and Triton could not sol
 
 As the picture I mentioned before. Function calling stack looks like the following figure.
 
-<img src="../4/Call_stack_layout.svg.png" height="350">
+<center><img src="../4/Call_stack_layout.svg.png" height="350"></center>
 
 And there is no way to know the size of static array. As EFL binary files don't contain any information about how large the array is. Symbolic constraints solve engine cannot find a appropriate way to avoid engine visiting memory out of the array. So, it may generate some test case can cause program encounter a **Segmentation Fault**.
 
