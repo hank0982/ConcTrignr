@@ -4,11 +4,10 @@ int check(int i) {
     int a[] = {1, 2, 3, 4, 5, 6};
 
     if (a[i] > 6) {
-        a[i] = 0;
+        a[i] = 1;
         return 1;
     }
     else {
-        a[i] = 1;
         return 0;
     }
 }
