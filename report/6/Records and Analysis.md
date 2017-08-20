@@ -17,7 +17,6 @@ int check(int i) {
         return 1;
     }
     else {
-        a[i] = 1;
         return 0;
     }
 
@@ -35,40 +34,200 @@ angr results:
 
 ```shell
 ➜  ConcTriton git:(master) ✗ python angr_run.py -r -s2 -C0 -l1 programs/array.c
-WARNING | 2017-08-20 02:43:03,206 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry.
-
-
+WARNING | 2017-08-20 05:56:35,485 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry.
 
 [*] Compiling...
 gcc -o programs/a.out programs/array.c
 [*] Compile completed
 
 [*] Analysing...
-WARNING | 2017-08-20 02:43:06,410 | simuvex.engine.successors | Exit state has over 257 possible solutions. Likely unconstrained; skipping. <BV64 mem_7ffffff00000009_22_64{UNINITIALIZED}>
-WARNING | 2017-08-20 02:43:06,734 | simuvex.engine.successors | Exit state has over 257 possible solutions. Likely unconstrained; skipping. <BV64 mem_fffeff50_24_64{UNINITIALIZED}>
+WARNING | 2017-08-20 05:56:38,599 | simuvex.engine.successors | Exit state has over 257 possible solutions. Likely unconstrained; skipping. <BV64 mem_1fffeff50_22_64{UNINITIALIZED}>
 [*] Paths found: 2
-[+] New Input: 8 | ASCII: 56
 [+] New Input: 9 | ASCII: 57
+[+] New Input: 6 | ASCII: 54
 [*] Analysis completed
 
 [*] Result 1:
-Calling: programs/a.out 8
-return value:-11
-
-[*] Result 2:
 Calling: programs/a.out 9
 return value:-11
 
-Coverage: 0.00%
+[*] Result 2:
+Calling: programs/a.out 6
+return value:1
+
+Coverage: 50.00%                                                      
 ```
 
 Triton results:
 
 ```shell
-
+➜  ConcTriton git:(master) ✗ make triton P="a.out 1"                                  
+=== Using Triton ===                                          
+/home/neil/Triton/build/triton triton_run.py programs/a.out 1 
+Before start analysis                                         
+Before run program                                            
+[+] Take Snapshot                                             
+[+] In main                                                   
+[+] In main() we set :                                        
+Input data      [0x7fffdcabb754] = 49 1                       
+[+] Exit point                                                
+[]                                                            
+Symbolic variables: {0L: SymVar_0:8}                          
+input.bound 0                                                 
+[+] Done !                                                    
 ```
 
-As we can see, angr generated two "illegal" test cases, and Triton could not solve this kind of  problem.
+KLEE test case:
+
+```c
+#include <stdio.h>
+
+int check(int i) {
+    int a[] = {1, 2, 3, 4, 5, 6};
+
+    if (a[i] > 6) {
+        a[i] = 0;
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+int main() {
+    int i;
+    klee_make_symbolic(&i, sizeof(i), "i");
+    return check(i);
+}
+```
+
+
+
+KLEE results:
+
+```shell
+ktest file : 'klee-last/test000001.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 6
+ktest file : 'klee-last/test000002.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: -224
+ktest file : 'klee-last/test000003.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 0
+ktest file : 'klee-last/test000004.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: -216
+ktest file : 'klee-last/test000005.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: -264
+ktest file : 'klee-last/test000006.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 1500
+ktest file : 'klee-last/test000007.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 2692
+ktest file : 'klee-last/test000008.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 41404
+ktest file : 'klee-last/test000009.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 6128
+ktest file : 'klee-last/test000010.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 41792
+ktest file : 'klee-last/test000011.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 42196
+ktest file : 'klee-last/test000012.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 42308
+ktest file : 'klee-last/test000013.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 42648
+ktest file : 'klee-last/test000014.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 59212
+ktest file : 'klee-last/test000015.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 61908
+ktest file : 'klee-last/test000016.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 44428
+ktest file : 'klee-last/test000017.ktest'
+args       : ['array_klee.bc']
+num objects: 1
+object    0: name: b'i'
+object    0: size: 4
+object    0: data: 61992
+ktest-tool --write-ints klee-last/test000001.ktest
+ktest-tool --write-ints klee-last/test000002.ktest
+ktest-tool --write-ints klee-last/test000003.ktest
+ktest-tool --write-ints klee-last/test000004.ktest
+ktest-tool --write-ints klee-last/test000005.ktest
+ktest-tool --write-ints klee-last/test000006.ktest
+ktest-tool --write-ints klee-last/test000007.ktest
+ktest-tool --write-ints klee-last/test000008.ktest
+ktest-tool --write-ints klee-last/test000009.ktest
+ktest-tool --write-ints klee-last/test000010.ktest
+ktest-tool --write-ints klee-last/test000011.ktest
+ktest-tool --write-ints klee-last/test000012.ktest
+ktest-tool --write-ints klee-last/test000013.ktest
+ktest-tool --write-ints klee-last/test000014.ktest
+ktest-tool --write-ints klee-last/test000015.ktest
+ktest-tool --write-ints klee-last/test000016.ktest
+ktest-tool --write-ints klee-last/test000017.ktest
+```
+
+As we can see, angr generated two "illegal" test cases, Triton could not solve this kind of  problem, and I don't why KLEE gave us so many test cases which are mostly incorrect.
 
 ### b. Analysis
 
@@ -76,11 +235,13 @@ As the picture I mentioned before. Function calling stack looks like the followi
 
 <center><img src="../4/Call_stack_layout.svg.png" height="350"></center>
 
-And there is no way to know the size of static array. As EFL binary files don't contain any information about how large the array is. Symbolic constraints solve engine cannot find a appropriate way to avoid engine visiting memory out of the array. So, it may generate some test case can cause program encounter a **Segmentation Fault**.
+And there is no way to know the size of static array. As EFL binary files don't contain any information about how large the array is. Symbolic constraints solve engine cannot find an appropriate way to avoid engine visiting memory outside of the array. So, it may generate some test case can cause program encounter a **Segmentation Fault**.
 
-When it comes to dynamic array which OS locates them in heap. Things don't get better. There is still no way to know its size. The only way we can reserve size information is define some structures or some high-level classes. Such as vector supported by C++. But test tools can only support these standard structures or classes which tools know where they can reach size information. As for some user-defined structures or classes, testers must provide some extra information about where the size information is stored.
+When it comes to dynamic array which OS locates them in heap. Things don't get better. There is still no way to know its size. The only way we can reserve size information is define some structures or some high-level classes or compile sources into programs with debugging symbols. Such as vector supported by C++. But test tools can only support these standard structures or classes which tools know where they can reach size information. As for some user-defined structures or classes, testers must provide some extra information about where the size information is stored.
 
-So, unless we change binary files format to contain more information, otherwise theoretically no tool can solve this challenge. The best thing  programmer can do is to develop a good programming habit of always checking index before visiting elements of an array. And we can improve the test program to the following one:
+On the other hand, if we can analyze programs' source code directly, all information we need can be retrieved. But unfortunately, we don't know why, KLEE failed on this challenge. It generates a lot of out-of-bound visiting behaviors, which may lead to segmentation fault.
+
+In order to solve this challenge, we can change binary files format to contain more information or our tool can using information contained in source code correctly, otherwise no tool can solve this challenge theoretically. The best thing as programmer can do is to have a good programming habit of always checking index before visiting elements of an array. And we can improve the test program to the following one:
 
 ```c
 int main(int argc, char**argv) {
@@ -94,36 +255,54 @@ int main(int argc, char**argv) {
 }
 ```
 
-Even this program can only reach the "return 0" statement, but angr said it found two paths. I am still investigating causes.
+Even this program can only reach the "return 0" statement, but angr said it found two paths. I am still investigating causes. But at least it won't generate test cases can crash the program.
 
 ```shell
-➜  ConcTriton git:(master) ✗ python angr_run.py -r -s2 -C0 -l1 programs/array.c                                                 
-WARNING | 2017-07-31 20:04:48,664 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry. 
-                                                                                                                                
-                                                                                                                                
-                                                                                                                                
-[*] Compiling...                                                                                                                
-gcc -o programs/a.out programs/array.c                                                                                          
-[*] Compile completed                                                                                                           
-                                                                                                                                
-[*] Analysing...                                                                                                                
-[*] Paths found: 2                                                                                                              
-[+] New Input: 8 | ASCII: 56                                                                                                    
-[+] New Input: 3 | ASCII: 51                                                                                                    
-[*] Analysis completed                                                                                                          
-                                                                                                                                
-[*] Result 1:                                                                                                                   
-Calling: programs/a.out 8                                                                                                       
-0                                                                                                                               
-return value:0                                                                                                                  
-                                                                                                                                
-[*] Result 2:                                                                                                                   
-Calling: programs/a.out 3                                                                                                       
-4                                                                                                                               
-return value:0                                                                                                                  
-                                                                                                                                
-Coverage: 50.00%
+➜  ConcTriton git:(master) ✗ python angr_run.py -r -s2 -C0 -l1 programs/array.c
+WARNING | 2017-08-20 05:55:46,196 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry.
+
+[*] Compiling...
+gcc -o programs/a.out programs/array.c
+[*] Compile completed
+
+[*] Analysing...
+[*] Paths found: 2
+[+] New Input: 8 | ASCII: 56
+[+] New Input: 3 | ASCII: 51
+[*] Analysis completed
+
+[*] Result 1:
+Calling: programs/a.out 8
+return value:0
+
+[*] Result 2:
+Calling: programs/a.out 3
+return value:0
+
+Coverage: 50.00%                                           
 ```
+
+And here is KLEE's output:
+
+```shell
+➜  ~   python get_res.py 2                        
+ktest-tool --write-ints klee-last/test000001.ktest
+ktest file : 'klee-last/test000001.ktest'         
+args       : ['array_klee.bc']                    
+num objects: 1                                    
+object    0: name: b'i'                           
+object    0: size: 4                              
+object    0: data: 6                              
+ktest-tool --write-ints klee-last/test000002.ktest
+ktest file : 'klee-last/test000002.ktest'         
+args       : ['array_klee.bc']                    
+num objects: 1                                    
+object    0: name: b'i'                           
+object    0: size: 4                              
+object    0: data: 0                              
+```
+
+
 
 ## 2. Multithreading
 
