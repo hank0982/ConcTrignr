@@ -310,18 +310,67 @@ object    0: data: 0
 
 ```c
 #include <pthread.h>
+#include <time.h>
+#include <unistd.h>
+
 
 void* inc(void* i) {
+    long long* j = (long long*)i;
+    unsigned long start = (unsigned long)time(NULL);
+
+    while ((unsigned long)time(NULL) - start < 2)
+        *j += 1;
+}
+
+void* dec(void* i) {
+    long long* j = (long long*)i;
+    unsigned long start = (unsigned long)time(NULL);
+
+    while ((unsigned long)time(NULL) - start < 2)
+        *j -= 1;
+}
+
+int check(long long* i) {
+    pthread_t thread1, thread2;
+    int rc1 = pthread_create(&thread1, NULL, inc, (void*)i);
+    int rc2 = pthread_create(&thread2, NULL, dec, (void*)i);
+    int flag;
+
+    sleep(1);
+    printf("%lld", *i);
+
+    if (*i > 0)
+        flag = 1;
+    else
+        flag = 0;
+
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+
+    return flag;
 }
 
 int main(int argc, char** argv) {
-    pthread_t thread;
-    int rc = pthread_create(&thread, NULL, inc, (void*)&NULL);
+    long long i = atoi(argv[1]);
 
-    rc = pthread_join(thread, NULL);
-    return 0;
+    return check(&i);
 }
 ```
+
+If you compile these and run the program several times, you may get something like this:
+
+```shell
+➜  ConcTriton git:(master) ✗ gcc -o programs/m.out programs/multi_thread.c -lpthread
+
+➜  ConcTriton git:(master) ✗ programs/m.out 0
+24244245
+➜  ConcTriton git:(master) ✗ programs/m.out 0
+13134895
+➜  ConcTriton git:(master) ✗ programs/m.out 0
+-217098
+```
+
+
 
 angr encountered some errors while stepping. Its IP was set to 0x0 after several steps. I've opened an issue on GitHub and I'm still waiting for official reply.
 

@@ -1,16 +1,46 @@
 #include <pthread.h>
+#include <time.h>
+#include <unistd.h>
+
 
 void* inc(void* i) {
-    // int* j = (int*)i;
-    // *j += 1;
+    long long* j = (long long*)i;
+    unsigned long start = (unsigned long)time(NULL);
+
+    while ((unsigned long)time(NULL) - start < 2)
+        *j += 1;
+}
+
+void* dec(void* i) {
+    long long* j = (long long*)i;
+    unsigned long start = (unsigned long)time(NULL);
+
+    while ((unsigned long)time(NULL) - start < 2)
+        *j -= 1;
+}
+
+int check(long long* i) {
+    pthread_t thread1, thread2;
+    int rc1 = pthread_create(&thread1, NULL, inc, (void*)i);
+    int rc2 = pthread_create(&thread2, NULL, dec, (void*)i);
+    int flag;
+
+    sleep(1);
+    printf("%lld", *i);
+
+    if (*i > 0)
+        flag = 1;
+    else
+        flag = 0;
+
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+
+    return flag;
 }
 
 int main(int argc, char** argv) {
-    pthread_t thread;
-    int i = 1;
-    int rc = pthread_create(&thread, NULL, inc, (void*)&i);
+    long long i = atoi(argv[1]);
 
-    rc = pthread_join(thread, NULL);
-
-    return 0;
+    return check(&i);
 }

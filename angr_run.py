@@ -43,6 +43,9 @@ def run_symexe(path, argv_size=2, show_bytes=True, show_model=False):
         else:
             print colored('[+] New Input: ' + res, 'green')
 
+    for err in pg.errored:
+        print colored('[-] Error: ' + repr(err), 'red')
+
     return results
 
 

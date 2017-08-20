@@ -232,5 +232,5 @@ if __name__ == '__main__':
     # Set architecture
     setArchitecture(ARCH.X86_64)
 
-    elfAddrs = ElfAddrs("programs/o.out")
+    elfAddrs = ElfAddrs("programs/a.out")
     TritonExecution.run('1', elfAddrs, ["main", "check"])
