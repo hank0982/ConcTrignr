@@ -7,14 +7,26 @@
 ### a. Test program
 
 ```c
-int main(int argc, char**argv) {
+#include <stdio.h>
+
+int check(int i) {
     int a[] = {1, 2, 3, 4, 5, 6};
+
+    if (a[i] > 1) {
+        a[i] = 0;
+        return 1;
+    }
+    else {
+        a[i] = 1;
+        return 0;
+    }
+
+}
+
+int main(int argc, char**argv) {
     int i = atoi(argv[1]);
 
-    if (a[i] > 6)
-        return 1;
-    else
-        return 0;
+    return check(i);
 }
 ```
 
@@ -22,53 +34,38 @@ angr results:
 
 
 ```shell
-➜  ConcTriton git:(master) ✗ python angr_run.py -r -s2 -C0 -l1 programs/array.c                                                 
-WARNING | 2017-07-31 20:01:50,119 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry. 
-                                                                                                                                
-                                                                                                                                
-                                                                                                                                
-[*] Compiling...                                                                                                                
-gcc -o programs/a.out programs/array.c                                                                                          
-[*] Compile completed                                                                                                           
-                                                                                                                                
-[*] Analysing...                                                                                                                
-[*] Paths found: 2                                                                                                              
-[+] New Input: 6 | ASCII: 54                                                                                                    
-[+] New Input: 7 | ASCII: 55                                                                                                    
-[*] Analysis completed                                                                                                          
-                                                                                                                                
-[*] Result 1:                                                                                                                   
-Calling: programs/a.out 6                                                                                                       
-0                                                                                                                               
-return value:0                                                                                                                  
-                                                                                                                                
-[*] Result 2:                                                                                                                   
-Calling: programs/a.out 7                                                                                                       
-0                                                                                                                               
-return value:0                                                                                                                  
-                                                                                                                                
-Coverage: 50.00%
+➜  ConcTriton git:(master) ✗ python angr_run.py -r -s2 -C0 -l1 programs/array.c
+WARNING | 2017-08-20 02:43:03,206 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry.
+
+
+
+[*] Compiling...
+gcc -o programs/a.out programs/array.c
+[*] Compile completed
+
+[*] Analysing...
+WARNING | 2017-08-20 02:43:06,410 | simuvex.engine.successors | Exit state has over 257 possible solutions. Likely unconstrained; skipping. <BV64 mem_7ffffff00000009_22_64{UNINITIALIZED}>
+WARNING | 2017-08-20 02:43:06,734 | simuvex.engine.successors | Exit state has over 257 possible solutions. Likely unconstrained; skipping. <BV64 mem_fffeff50_24_64{UNINITIALIZED}>
+[*] Paths found: 2
+[+] New Input: 8 | ASCII: 56
+[+] New Input: 9 | ASCII: 57
+[*] Analysis completed
+
+[*] Result 1:
+Calling: programs/a.out 8
+return value:-11
+
+[*] Result 2:
+Calling: programs/a.out 9
+return value:-11
+
+Coverage: 0.00%
 ```
 
 Triton results:
 
 ```shell
-➜  ConcTriton git:(master) ✗ make triton P="a.out 1"
-echo "=== Using Triton ==="
-=== Using Triton ===
-/home/neil/Triton/build/triton triton_run.py programs/a.out 1
-Before start analysis
-Before run program
-[+] Take Snapshot
-[+] In main
-[+] In main() we set :
-Input data      [0x7ffc8f912752] = 49 1
-[+] Exit point
-[[5292L, 4195840L, 4195833L]]
-Symbolic variables: {0L: SymVar_0:8}
-input.bound 0
-model: {}
-2[+] Done !
+
 ```
 
 As we can see, angr generated two "illegal" test cases, and Triton could not solve this kind of  problem.
