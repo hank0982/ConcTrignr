@@ -530,14 +530,41 @@ input.bound 2
 KLEE output:
 
 ```shell
+➜  ~ clang -emit-llvm -c -g ConcTrignr/programs/overflow_klee.c
+ConcTrignr/programs/overflow_klee.c:6:13: warning: implicit declaration of function 'atoi' is invalid in C99 [-Wimplicit-function-declaration]
+    int b = atoi(s);
+            ^
+ConcTrignr/programs/overflow_klee.c:19:5: warning: implicit declaration of function 'klee_make_symbolic' is invalid in C99 [-Wimplicit-function-declaration]
+    klee_make_symbolic(&i, sizeof(i), "i");
+    ^
+ConcTrignr/programs/overflow_klee.c:20:5: warning: implicit declaration of function 'klee_assume' is invalid in C99 [-Wimplicit-function-declaration]
+    klee_assume(i[10] == '\0');
+    ^
+3 warnings generated.
+➜  ~ klee  --libc=uclibc -posix-runtime overflow_klee.bc
+KLEE: NOTE: Using klee-uclibc : /home/klee/klee_build/klee/Release+Debug+Asserts/lib/klee-uclibc.bca
+KLEE: NOTE: Using model: /home/klee/klee_build/klee/Release+Debug+Asserts/lib/libkleeRuntimePOSIX.bca
+KLEE: output directory is "/home/klee/klee-out-12"
+KLEE: Using STP solver backend
+KLEE: WARNING ONCE: calling external: syscall(16, 0, 21505, 44119728) at /home/klee/klee_src/runtime/POSIX/fd.c:1044
+KLEE: WARNING ONCE: calling __user_main with extra arguments.
+KLEE: WARNING ONCE: Alignment of memory from call "malloc" is not modelled. Using alignment of 8.
 
+KLEE: done: total instructions = 1040827
+KLEE: done: completed paths = 14701
+KLEE: done: generated tests = 14701
+➜  ~ python run_program.py 14701 ConcTrignr/programs/overflow_klee.c
+[+] Compiling...
+[+] Compilied
+Return values set: {0}
+Total: 1
 ```
 
-
+KLEE generated a lot of test cases and it took it some time to do that. But the results is frustrating, these test cases can only trigger one branch. So we come to the solution that only angr can handle this challenge properly.
 
 ### b. Analysis
 
-
+// TODO
 
 ## 4. Float-point Number
 
