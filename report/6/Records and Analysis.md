@@ -82,11 +82,12 @@ KLEE test case:
 ```c
 #include <stdio.h>
 
-int check(int i) {
+int check(char* s) {
     int a[] = {1, 2, 3, 4, 5, 6};
+    int i = atoi(s);
 
     if (a[i] > 6) {
-        a[i] = 0;
+        a[i] = 1;
         return 1;
     }
     else {
@@ -94,9 +95,11 @@ int check(int i) {
     }
 }
 
-int main() {
-    int i;
+int main(int argc, char** argv) {
+    char i[2];
     klee_make_symbolic(&i, sizeof(i), "i");
+    klee_assume(i[1] == '\0');
+
     return check(i);
 }
 ```
@@ -106,125 +109,102 @@ int main() {
 KLEE results:
 
 ```shell
+➜  ~ clang -emit-llvm -c -g ConcTrignr/programs/array_klee.c
+ConcTrignr/programs/array_klee.c:5:13: warning: implicit declaration of function 'atoi' is invalid in C99 [-Wimplicit-function-declaration]
+    int i = atoi(s);
+            ^
+ConcTrignr/programs/array_klee.c:18:5: warning: implicit declaration of function 'klee_make_symbolic' is invalid in C99 [-Wimplicit-function-declaration]
+    klee_make_symbolic(&i, sizeof(i), "i");
+    ^
+ConcTrignr/programs/array_klee.c:19:5: warning: implicit declaration of function 'klee_assume' is invalid in C99 [-Wimplicit-function-declaration]
+    klee_assume(i[1] == '\0');
+    ^
+3 warnings generated.
+➜  ~ klee  --libc=uclibc -posix-runtime array_klee.bc
+KLEE: NOTE: Using klee-uclibc : /home/klee/klee_build/klee/Release+Debug+Asserts/lib/klee-uclibc.bca
+KLEE: NOTE: Using model: /home/klee/klee_build/klee/Release+Debug+Asserts/lib/libkleeRuntimePOSIX.bca
+KLEE: output directory is "/home/klee/klee-out-11"
+KLEE: Using STP solver backend
+KLEE: WARNING ONCE: calling external: syscall(16, 0, 21505, 49392960) at /home/klee/klee_src/runtime/POSIX/fd.c:1044
+KLEE: WARNING ONCE: calling __user_main with extra arguments.
+KLEE: WARNING ONCE: Alignment of memory from call "malloc" is not modelled. Using alignment of 8.
+KLEE: ERROR: /home/klee/ConcTrignr/programs/array_klee.c:7: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+
+KLEE: done: total instructions = 6113
+KLEE: done: completed paths = 8
+KLEE: done: generated tests = 7
+➜  ~ python get_res.py 7
+ktest-tool --write-ints klee-last/test000001.ktest
 ktest file : 'klee-last/test000001.ktest'
 args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
+num objects: 2
+object    0: name: b'model_version'
 object    0: size: 4
-object    0: data: 6
+object    0: data: 1
+object    1: name: b'i'
+object    1: size: 2
+object    1: data: b'\x0b\x00'
+ktest-tool --write-ints klee-last/test000002.ktest
 ktest file : 'klee-last/test000002.ktest'
 args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
+num objects: 2
+object    0: name: b'model_version'
 object    0: size: 4
-object    0: data: -224
+object    0: data: 1
+object    1: name: b'i'
+object    1: size: 2
+object    1: data: b'-\x00'
+ktest-tool --write-ints klee-last/test000003.ktest
 ktest file : 'klee-last/test000003.ktest'
 args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
+num objects: 2
+object    0: name: b'model_version'
 object    0: size: 4
-object    0: data: 0
+object    0: data: 1
+object    1: name: b'i'
+object    1: size: 2
+object    1: data: b'+\x00'
+ktest-tool --write-ints klee-last/test000004.ktest
 ktest file : 'klee-last/test000004.ktest'
 args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
+num objects: 2
+object    0: name: b'model_version'
 object    0: size: 4
-object    0: data: -216
+object    0: data: 1
+object    1: name: b'i'
+object    1: size: 2
+object    1: data: b'\x00\x00'
+ktest-tool --write-ints klee-last/test000005.ktest
 ktest file : 'klee-last/test000005.ktest'
 args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
+num objects: 2
+object    0: name: b'model_version'
 object    0: size: 4
-object    0: data: -264
+object    0: data: 1
+object    1: name: b'i'
+object    1: size: 2
+object    1: data: b'6\x00'
+ktest-tool --write-ints klee-last/test000006.ktest
 ktest file : 'klee-last/test000006.ktest'
 args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
+num objects: 2
+object    0: name: b'model_version'
 object    0: size: 4
-object    0: data: 1500
+object    0: data: 1
+object    1: name: b'i'
+object    1: size: 2
+object    1: data: b'A\x00'
+ktest-tool --write-ints klee-last/test000007.ktest
 ktest file : 'klee-last/test000007.ktest'
 args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
+num objects: 2
+object    0: name: b'model_version'
 object    0: size: 4
-object    0: data: 2692
-ktest file : 'klee-last/test000008.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 41404
-ktest file : 'klee-last/test000009.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 6128
-ktest file : 'klee-last/test000010.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 41792
-ktest file : 'klee-last/test000011.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 42196
-ktest file : 'klee-last/test000012.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 42308
-ktest file : 'klee-last/test000013.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 42648
-ktest file : 'klee-last/test000014.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 59212
-ktest file : 'klee-last/test000015.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 61908
-ktest file : 'klee-last/test000016.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 44428
-ktest file : 'klee-last/test000017.ktest'
-args       : ['array_klee.bc']
-num objects: 1
-object    0: name: b'i'
-object    0: size: 4
-object    0: data: 61992
-ktest-tool --write-ints klee-last/test000001.ktest
-ktest-tool --write-ints klee-last/test000002.ktest
-ktest-tool --write-ints klee-last/test000003.ktest
-ktest-tool --write-ints klee-last/test000004.ktest
-ktest-tool --write-ints klee-last/test000005.ktest
-ktest-tool --write-ints klee-last/test000006.ktest
-ktest-tool --write-ints klee-last/test000007.ktest
-ktest-tool --write-ints klee-last/test000008.ktest
-ktest-tool --write-ints klee-last/test000009.ktest
-ktest-tool --write-ints klee-last/test000010.ktest
-ktest-tool --write-ints klee-last/test000011.ktest
-ktest-tool --write-ints klee-last/test000012.ktest
-ktest-tool --write-ints klee-last/test000013.ktest
-ktest-tool --write-ints klee-last/test000014.ktest
-ktest-tool --write-ints klee-last/test000015.ktest
-ktest-tool --write-ints klee-last/test000016.ktest
-ktest-tool --write-ints klee-last/test000017.ktest
+object    0: data: 1
+object    1: name: b'i'
+object    1: size: 2
+object    1: data: b'0\x00'
 ```
 
 As we can see, angr generated two "illegal" test cases, Triton could not solve this kind of  problem, and I don't why KLEE gave us so many test cases which are mostly incorrect.
@@ -361,7 +341,10 @@ If you compile these and run the program several times, you may get something li
 
 ```shell
 ➜  ConcTriton git:(master) ✗ gcc -o programs/m.out programs/multi_thread.c -lpthread
-
+programs/multi_thread.c: In function 'check':
+programs/multi_thread.c:29:5: warning: incompatible implicit declaration of built-in function 'printf' [enabled by default]
+     printf("%lld", *i);
+     ^
 ➜  ConcTriton git:(master) ✗ programs/m.out 0
 24244245
 ➜  ConcTriton git:(master) ✗ programs/m.out 0
@@ -370,7 +353,7 @@ If you compile these and run the program several times, you may get something li
 -217098
 ```
 
-
+Even you keep passing 0 to this program, its output is almost random, you cannot even find some any law from those outputs. Because of uncertainty of system, each time we will get a different output. So, this challenge cannot be solved theoretically. 
 
 angr encountered some errors while stepping. Its IP was set to 0x0 after several steps. I've opened an issue on GitHub and I'm still waiting for official reply.
 
@@ -406,6 +389,27 @@ Out[1]:
 
 Triton used almost 4G memory and got nothing.
 
+As for KLEE:
+
+```shell
+➜  ~ klee  --libc=uclibc -posix-runtime multi_thread_klee.bc
+KLEE: NOTE: Using klee-uclibc : /home/klee/klee_build/klee/Release+Debug+Asserts/lib/klee-uclibc.bca
+KLEE: NOTE: Using model: /home/klee/klee_build/klee/Release+Debug+Asserts/lib/libkleeRuntimePOSIX.bca
+KLEE: output directory is "/home/klee/klee-out-9"
+KLEE: Using STP solver backend
+KLEE: WARNING: undefined reference to function: pthread_create
+KLEE: WARNING: undefined reference to function: pthread_join
+KLEE: WARNING ONCE: calling external: syscall(16, 0, 21505, 46710576) at /home/klee/klee_src/runtime/POSIX/fd.c:1044
+KLEE: WARNING ONCE: calling __user_main with extra arguments.
+KLEE: WARNING ONCE: Alignment of memory from call "malloc" is not modelled. Using alignment of 8.
+KLEE: WARNING ONCE: calling external: pthread_create(47000016, 0, 28000336, 44456288) at /home/klee/ConcTrignr/programs/multi_thread_klee.c:24
+KLEE: ERROR: /home/klee/ConcTrignr/programs/multi_thread_klee.c:25: failed external call: pthread_create
+KLEE: NOTE: now ignoring this error at this location
+[1]    1632 segmentation fault (core dumped)  klee --libc=uclibc -posix-runtime multi_thread_klee.bc
+```
+
+It seems like KLEE doesn't support pthread_create yet, which was mentioned by some forums earlier.
+
 ### b. Analysis
 
 // TODO
@@ -415,18 +419,24 @@ Triton used almost 4G memory and got nothing.
 ### a. Test program
 
 ```c
-int main(int argc, char** argv) {
-    // Maximum of signed int: 2147483647
+#include <stdio.h>
+
+int check(int b) {
     int a = 2147483640;
-    int b = atoi(argv[1]);
-    int c = 2;
+    int c = 3;
 
     if (c * b < 0 && b > 0)
-        return 2;
-    else if (a + b < 0 && b > 0)
         return 1;
+    else if (a + b < 0 && b > 0)
+        return 2;
     else
         return 0;
+}
+
+int main(int argc, char** argv) {
+    int i = atoi(argv[1]);
+
+    return check(i);
 }
 ```
 
@@ -434,7 +444,7 @@ angr output
 
 ```shell
 ➜  ConcTriton git:(master) ✗ python angr_run.py -r -s3 -C0 -l10 programs/overflow.c
-WARNING | 2017-07-31 20:13:21,501 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry.
+WARNING | 2017-08-21 05:26:10,852 | claripy | Claripy is setting the recursion limit to 15000. If Python segfaults, I am sorry.
 
 
 
@@ -472,70 +482,58 @@ Coverage: 100.00%
 Triton output
 
 ```shell
-➜  ConcTriton git:(master) ✗ make triton P="o.out 1000000000"
+➜  ConcTriton git:(master) ✗ make triton P="o.out 0000000000"
 echo "=== Using Triton ==="
 === Using Triton ===
-/home/neil/Triton/build/triton triton_run.py programs/o.out 1000000000
+/home/neil/Triton/build/triton triton_run.py programs/o.out 0000000000
 Before start analysis
 Before run program
 [+] Take Snapshot
 [+] In main
 [+] In main() we set :
-Input data      [0x7ffc771af737] = 49 1
-Input data      [0x7ffc771af738] = 48 0
-Input data      [0x7ffc771af739] = 48 0
-Input data      [0x7ffc771af73a] = 48 0
-Input data      [0x7ffc771af73b] = 48 0
-Input data      [0x7ffc771af73c] = 48 0
-Input data      [0x7ffc771af73d] = 48 0
-Input data      [0x7ffc771af73e] = 48 0
-Input data      [0x7ffc771af73f] = 48 0
-Input data      [0x7ffc771af740] = 48 0
+
+
+48 0     48 0    48 0    48 0    48 0    48 0    48 0    48 0    48 0    48 0    48 0    48 0
 [+] Exit point
-[[2453L, 4195696L, 4195709L], [2462L, 4195702L, 4195709L]]
-Symbolic variables: {0L: SymVar_0:8, 1L: SymVar_1:8, 2L: SymVar_2:8, 3L: SymVar_3:8, 4L: SymVar_4:8, 5L: SymVar_5:8, 6L: SymVar_6:8, 7L: SymVar_7:8, 8L: SymVar_8:8, 9L: SymVar_9:8}
+[[2711L, 4195674L, 4195661L], [2731L, 4195699L, 4195686L]]
 input.bound 0
-model: {0L: <SolverModel object at 0x2ba2ea388468>, 1L: <SolverModel object at 0x2ba2ea388498>, 2L: <SolverModel object at 0x2ba2ea3884b0>, 3L: <SolverModel object at 0x2ba2ea3884c8>, 4L: <SolverModel object at 0x2ba2ea3884e0>, 5L: <SolverModel object at 0x2ba2ea3884f8>, 6L: <SolverModel object at 0x2ba2ea388510>, 7L: <SolverModel object at 0x2ba2ea388528>, 8L: <SolverModel object at 0x2ba2ea388540>, 9L: <SolverModel object at 0x2ba2ea388558>}
-New input: {140722306742080L: 149L, 140722306742071L: 140L, 140722306742072L: 188L, 140722306742073L: 74L, 140722306742074L: 198L, 140722306742075L: 144L, 140722306742076L: 49L, 140722306742077L: 37L, 140722306742078L: 214L, 140722306742079L: 50L}
-model: {0L: <SolverModel object at 0x2ba2ea388798>, 1L: <SolverModel object at 0x2ba2ea3887c8>, 2L: <SolverModel object at 0x2ba2ea3887e0>, 3L: <SolverModel object at 0x2ba2ea3887f8>, 4L: <SolverModel object at 0x2ba2ea388810>, 5L: <SolverModel object at 0x2ba2ea388828>, 6L: <SolverModel object at 0x2ba2ea388840>, 7L: <SolverModel object at 0x2ba2ea388858>, 8L: <SolverModel object at 0x2ba2ea388870>, 9L: <SolverModel object at 0x2ba2ea388888>}
-New input: {140722306742080L: 64L, 140722306742071L: 48L, 140722306742072L: 81L, 140722306742073L: 84L, 140722306742074L: 128L, 140722306742075L: 66L, 140722306742076L: 132L, 140722306742077L: 191L, 140722306742078L: 64L, 140722306742079L: 154L}
 [+] Restore snapshot
 [+] In main
 [+] In main() we set :
-OD items:       [0x7ffc771af737] = 48 0
-OD items:       [0x7ffc771af738] = 81 Q
-OD items:       [0x7ffc771af739] = 84 T
-OD items:       [0x7ffc771af73a] = 128
-OD items:       [0x7ffc771af73b] = 66 B
-OD items:       [0x7ffc771af73c] = 132
-OD items:       [0x7ffc771af73d] = 191
-OD items:       [0x7ffc771af73e] = 64 @
-OD items:       [0x7ffc771af73f] = 154
-OD items:       [0x7ffc771af740] = 64 @
+61  111  79  66  0  64  38  32  183  89  195  25
+= o O B   @ &    Y  ↓
+
 [+] Exit point
-[[1813L, 4195709L, 4195696L], [1833L, 4195734L, 4195721L]]
-Symbolic variables: {0L: SymVar_0:8, 1L: SymVar_1:8, 2L: SymVar_2:8, 3L: SymVar_3:8, 4L: SymVar_4:8, 5L: SymVar_5:8, 6L: SymVar_6:8, 7L: SymVar_7:8, 8L: SymVar_8:8, 9L: SymVar_9:8}
+[[1723L, 4195674L, 4195661L], [1743L, 4195699L, 4195686L]]
 input.bound 2
 [+] Restore snapshot
 [+] In main
 [+] In main() we set :
-OD items:       [0x7ffc771af737] = 140
-OD items:       [0x7ffc771af738] = 188
-OD items:       [0x7ffc771af739] = 74 J
-OD items:       [0x7ffc771af73a] = 198
-OD items:       [0x7ffc771af73b] = 144
-OD items:       [0x7ffc771af73c] = 49 1
-OD items:       [0x7ffc771af73d] = 37 %
-OD items:       [0x7ffc771af73e] = 214
-OD items:       [0x7ffc771af73f] = 50 2
-OD items:       [0x7ffc771af740] = 149
+55  254  229  79  245  194  139  99  37  219  49  52
+7   O    c %  1 4
+
 [+] Exit point
-[[1687L, 4195709L, 4195696L], [1707L, 4195734L, 4195721L]]
-Symbolic variables: {0L: SymVar_0:8, 1L: SymVar_1:8, 2L: SymVar_2:8, 3L: SymVar_3:8, 4L: SymVar_4:8, 5L: SymVar_5:8, 6L: SymVar_6:8, 7L: SymVar_7:8, 8L: SymVar_8:8, 9L: SymVar_9:8}
+[[1825L, 4195674L, 4195661L], [1845L, 4195699L, 4195686L]]
 input.bound 1
-model: {}
+[+] Restore snapshot
+[+] In main
+[+] In main() we set :
+64  254  229  79  245  194  139  99  37  219  49  52
+@   O    c %  1 4
+
+[+] Exit point
+[[1723L, 4195674L, 4195661L], [1743L, 4195699L, 4195686L]]
+input.bound 2
 [+] Done !
 ```
+
+KLEE output:
+
+```shell
+
+```
+
+
 
 ### b. Analysis
 

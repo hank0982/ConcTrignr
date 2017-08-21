@@ -1,11 +1,17 @@
 #include <stdio.h>
 
-int main(int argc, char** argv) {
-    unsigned a = 80;
-    int b = argv[1][0] - '0';
-
-    if (b > a && b < 0)
+int check(int b, int a) {
+    if (b > 0 && 2 * b < 0)
         return 1;
     else
         return 0;
+}
+
+int main(int argc, char** argv) {
+    printf("In main\n");
+    int i = atoi(argv[1]);
+
+    printf("%d\n", i);
+
+    return check(i, 0);
 }
