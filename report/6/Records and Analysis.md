@@ -207,21 +207,22 @@ object    1: size: 2
 object    1: data: b'0\x00'
 ```
 
-As we can see, angr generated two "illegal" test cases, Triton could not solve this kind of  problem, and I don't why KLEE gave us so many test cases which are mostly incorrect.
+As we can see, angr generated two "illegal" test cases. Triton could not solve this kind of problem. KLEE gave us a myriad of test cases which are mostly incorrect.
 
 ### b. Analysis
 
-As the picture I mentioned before. Function calling stack looks like the following figure.
+Function calling stack looks like the following figure.
+ <center><img src="../4/Call_stack_layout.svg.png" height="350"></center>
 
-<center><img src="../4/Call_stack_layout.svg.png" height="350"></center>
+There is no way to know the size of the static array, because EFL binary files don't contain any information about how large the array is. Symbolic constraint solver engine cannot find an appropriate way to prevent the engine from visiting memory outside of the array. Therefore, it may generate test cases that can lead to **Segmentation Fault**.
 
-And there is no way to know the size of static array. As EFL binary files don't contain any information about how large the array is. Symbolic constraints solve engine cannot find an appropriate way to avoid engine visiting memory outside of the array. So, it may generate some test case can cause program encounter a **Segmentation Fault**.
+When it comes to dynamic array stored in the lheap, solver engine is still incapable of retrieving the size information.  By leveraging predefined data structures and high-level classes or compling program with debugging symbols, we could obtain the size information of dynamic array. However, test tools support limited standard data structures and classes, such as vector in C++, to access the size information. In terms of user-defined data structures or classes, testers are required to provide extra details indicating the storing location of the size information.
 
-When it comes to dynamic array which OS locates them in heap. Things don't get better. There is still no way to know its size. The only way we can reserve size information is define some structures or some high-level classes or compile sources into programs with debugging symbols. Such as vector supported by C++. But test tools can only support these standard structures or classes which tools know where they can reach size information. As for some user-defined structures or classes, testers must provide some extra information about where the size information is stored.
+(The only way we can reserve size information is define some structures or some high-level classes or compile sources into programs with debugging symbols. Such as vector supported by C++. But test tools can only support these standard structures or classes which tools know where they can reach size information. As for some user-defined structures or classes, testers must provide some extra information about where the size information is stored.)
 
-On the other hand, if we can analyze programs' source code directly, all information we need can be retrieved. But unfortunately, we don't know why, KLEE failed on this challenge. It generates a lot of out-of-bound visiting behaviors, which may lead to segmentation fault.
+On the other hand, if we can analyze programs' source code directly, all information we need can be retrieved. Unfortunately, KLEE failed the array challenge. It generates many index-out-of-bound exceptions, which may lead to segmentation fault.
 
-In order to solve this challenge, we can change binary files format to contain more information or our tool can using information contained in source code correctly, otherwise no tool can solve this challenge theoretically. The best thing as programmer can do is to have a good programming habit of always checking index before visiting elements of an array. And we can improve the test program to the following one:
+In order to solve this challenge, we can change the binary file format to contain more information. Alternatively, our tool can use information contained in the source code correctly. Otherwise, no existing tool can solve this challenge theoretically. The best thing programmer can do is to have a good programming habit of always checking index before visiting elements of an array. We can improve the test program as follows:
 
 ```c
 int main(int argc, char**argv) {
@@ -353,9 +354,9 @@ programs/multi_thread.c:29:5: warning: incompatible implicit declaration of buil
 -217098
 ```
 
-Even you keep passing 0 to this program, its output is almost random, you cannot even find some any law from those outputs. Because of uncertainty of system, each time we will get a different output. So, this challenge cannot be solved theoretically. 
+Even you keep passing 0 to this program, its output is almost random. You cannot even find any pattern from those outputs. Because of uncertainty of the system, we will get a different output each time. Therefore, this challenge cannot be solved theoretically. 
 
-angr encountered some errors while stepping. Its IP was set to 0x0 after several steps. I've opened an issue on GitHub and I'm still waiting for official reply.
+angr encountered some errors while stepping. Its IP was set to 0x0 after several steps. I've opened an issue on GitHub and I'm still waiting for an official reply.
 
 ```python
 In [1]: while len(pg.active) > 0:
@@ -408,7 +409,7 @@ KLEE: NOTE: now ignoring this error at this location
 [1]    1632 segmentation fault (core dumped)  klee --libc=uclibc -posix-runtime multi_thread_klee.bc
 ```
 
-It seems like KLEE doesn't support pthread_create yet, which was mentioned by some forums earlier.
+It seems like KLEE doesn't support pthread_create yet, which was mentioned by some forums earlier. However, according to Parallel Symbolic Execution for Automated Real-World Software Testing listed in the documentation of KLEE, there is an extension called cloud9 which could solve this challenge. Although it is a potential solution, it is not under maintenance.
 
 ### b. Analysis
 
@@ -560,7 +561,7 @@ Return values set: {0}
 Total: 1
 ```
 
-KLEE generated a lot of test cases and it took it some time to do that. But the results is frustrating, these test cases can only trigger one branch. So we come to the solution that only angr can handle this challenge properly.
+KLEE consumed a great amount of time to generate many test cases. But the results are frustrating, these test cases can only trigger one branch. So we come to the conclusion that only angr can handle this challenge properly.
 
 ### b. Analysis
 
